@@ -1,0 +1,32 @@
+# Archivos de entorno
+.env
+.env.local
+
+# Configuración sensible
+config.json
+
+# Dependencias y bibliotecas
+node_modules/
+venv/
+__pycache__/
+
+# Archivos temporales y de caché
+*.log
+*.tmp
+*.cache
+
+# Archivos generados por el sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de compilación
+build/
+dist/
+*.egg-info/
+
+# Documentación y archivos de salida
+docs/_build/
+
+# Configuraciones del IDE
+.idea/
+.vscode/
