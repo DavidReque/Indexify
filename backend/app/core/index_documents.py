@@ -1,53 +1,96 @@
-import os
-from elasticsearch import Elasticsearch, helpers
-from dotenv import load_dotenv
+from elasticsearch import Elasticsearch
+from typing import Optional, Dict, Any
+import logging
 
-# Cargar las variables de entorno
-load_dotenv()
+def create_elasticsearch_index(
+    client: Elasticsearch,
+    index_name: str,
+    vector_dims: int = 3
+) -> bool:
+    """
+    Crea un índice en Elasticsearch con un mapeo predefinido para artículos.
 
-# Obtener las variables de entorno
-elasticsearch_url = os.getenv("ELASTICSEARCH_CLOUD_ID")
-elasticsearch_api_key = os.getenv("ELASTICSEARCH_API_KEY")
-elasticsearch_index = os.getenv("INDEX_NAME")
+    Args:
+        client: Cliente de Elasticsearch
+        index_name: Nombre del índice a crear
+        vector_dims: Dimensión del vector denso (default: 3)
 
-# Conectar a Elasticsearch
-client = Elasticsearch(
-    elasticsearch_url,
-    api_key=elasticsearch_api_key
-)
+    Returns:
+        bool: True si se creó el índice correctamente, False en caso contrario
+    """
+    try:
+        # Definir el mapeo del índice
+        index_mapping = {
+            "mappings": {
+                "properties": {
+                    "title": {
+                        "type": "text",
+                        "analyzer": "standard"
+                    },
+                    "author": {
+                        "type": "keyword"
+                    },
+                    "publication_date": {
+                        "type": "date"
+                    },
+                    "abstract": {
+                        "type": "text",
+                        "analyzer": "standard"
+                    },
+                    "keywords": {
+                        "type": "keyword"
+                    },
+                    "content": {
+                        "type": "text",
+                        "analyzer": "standard"
+                    },
+                    "vector": {
+                        "type": "dense_vector",
+                        "dims": vector_dims
+                    }
+                }
+            }
+        }
 
-index_name = elasticsearch_index
-docs = [
-    {
-        "vector": [
-            6.294,
-            4.035,
-            1.473
-        ],
-        "text": "Yellowstone National Park"
-    },
-    {
-        "vector": [
-            4.908,
-            7.094,
-            3.556
-        ],
-        "text": "Yosemite National Park"
-    },
-    {
-        "vector": [
-            9.692,
-            2.295,
-            7.824
-        ],
-        "text": "Rocky Mountain National Park"
-    }
-]
+        # Verificar si el índice ya existe
+        if client.indices.exists(index=index_name):
+            logging.warning(f"El índice '{index_name}' ya existe")
+            return False
 
-# Indexar documentos
-bulk_response = helpers.bulk(client, docs, index=index_name)
-print(bulk_response)
+        # Crear el índice
+        response = client.indices.create(
+            index=index_name,
+            body=index_mapping
+        )
+        
+        logging.info(f"Índice '{index_name}' creado exitosamente")
+        return True
 
-# Verificar los documentos indexados
-search_response = client.search(index=index_name, body={"query": {"match_all": {}}})
-print(search_response['hits']['hits'])
+    except Exception as e:
+        logging.error(f"Error al crear el índice: {str(e)}")
+        return False
+
+if __name__ == "__main__":
+    from dotenv import load_dotenv
+    import os
+    import ssl
+    
+    # Cargar variables de entorno
+    load_dotenv()
+    
+    # Configurar el cliente
+    client = Elasticsearch(
+        hosts=[os.getenv("ELASTICSEARCH_CLOUD_ID")],
+        api_key=os.getenv("ELASTICSEARCH_API_KEY"),
+        verify_certs=True,
+        ssl_context=ssl.create_default_context()
+    )
+    
+    # Crear el índice
+    success = create_elasticsearch_index(
+        client=client,
+        index_name=os.getenv("INDEX_NAME"),
+        vector_dims=3
+    )
+    
+    print("Índice creado exitosamente" if success else "Error al crear el índice")
