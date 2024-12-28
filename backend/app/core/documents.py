@@ -40,7 +40,7 @@ def process_search_results(results: list[dict]) -> list[dict]:
     documents = []
     for item in results:
         # Genera un vector aleatorio de 3 dimensiones como ejemplo
-        # En un caso real, aquí utilizarías un modelo para generar los embeddings
+        # En un caso real, aquí utilizaríamos un modelo para generar los embeddings
         vector = np.random.rand(3).tolist()
         
         documents.append({
