@@ -85,21 +85,22 @@ def vector_text_search(
         List[Dict]: Lista de documentos encontrados
     """
     try:
-        # Construye la query combinando búsqueda de texto y vectorial
         query = {
             "size": size,
-            "min_score": min_score,
             "query": {
                 "script_score": {
                     "query": {
                         "multi_match": {
                             "query": query_text,
-                            "fields": ["title^2", "abstract", "content"],
+                            "fields": ["title^3", "abstract^2", "content"],
                             "fuzziness": "AUTO"
                         }
                     },
                     "script": {
-                        "source": "cosineSimilarity(params.query_vector, 'vector') + 1.0",
+                        "source": """
+                            cosineSimilarity(params.query_vector, 'vector') + 1.0 + 
+                            (doc['keywords'].size() > 0 ? 0.5 : 0)
+                        """,
                         "params": {"query_vector": query_vector}
                     }
                 }
@@ -108,7 +109,6 @@ def vector_text_search(
 
         response = client.search(index=index_name, body=query)
         
-        # Procesa y formatea los resultados
         results = []
         for hit in response['hits']['hits']:
             result = {
@@ -159,7 +159,6 @@ def advanced_search(
         List[Dict]: Lista de documentos encontrados
     """
     try:
-        # query dinámica basada en los parámetros proporcionados
         must_conditions = []
         
         if title:
@@ -180,14 +179,13 @@ def advanced_search(
             })
             
         if date_from or date_to:
-            date_range = {}
-            if date_from:
-                date_range["gte"] = date_from
-            if date_to:
-                date_range["lte"] = date_to
             must_conditions.append({
                 "range": {
-                    "publication_date": date_range
+                    "publication_date": {
+                        "gte": date_from,
+                        "lte": date_to,
+                        "format": "yyyy-MM-dd"
+                    }
                 }
             })
             
@@ -223,20 +221,9 @@ def advanced_search(
 
         response = client.search(index=index_name, body=query)
         
-        # Procesa y formatea los resultados
         results = []
         for hit in response['hits']['hits']:
-            result = {
-                'id': hit['_id'],
-                'score': hit['_score'],
-                'title': hit['_source'].get('title', ''),
-                'abstract': hit['_source'].get('abstract', ''),
-                'author': hit['_source'].get('author', ''),
-                'publication_date': hit['_source'].get('publication_date'),
-                'keywords': hit['_source'].get('keywords', []),
-                'content': hit['_source'].get('content', '')
-            }
-            results.append(result)
+            results.append(hit['_source'])
 
         logging.info(f"Búsqueda avanzada completada. Encontrados {len(results)} resultados")
         return results

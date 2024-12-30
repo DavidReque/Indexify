@@ -7,7 +7,7 @@ def create_elasticsearch_index(
     vector_dims: int = 3
 ) -> bool:
     """
-    Crea un índice en Elasticsearch con un mapeo predefinido para artículos.
+    Crea un índice en Elasticsearch
 
     Args:
         client: Cliente de Elasticsearch
@@ -18,15 +18,28 @@ def create_elasticsearch_index(
         bool: True si se creó el índice correctamente, False en caso contrario
     """
     try:
+        if vector_dims <= 0:
+            raise ValueError("La dimensión del vector debe ser mayor a 0")
+
         index_mapping = {
+            "settings": {
+                "analysis": {
+                    "analyzer": {
+                        "custom_text_analyzer": {
+                            "type": "standard",
+                            "stopwords": "_english_"
+                        }
+                    }
+                }
+            },
             "mappings": {
                 "properties": {
-                    "title": {"type": "text", "analyzer": "standard"},
+                    "title": {"type": "text", "analyzer": "custom_text_analyzer"},
                     "author": {"type": "keyword"},
                     "publication_date": {"type": "date"},
-                    "abstract": {"type": "text", "analyzer": "standard"},
+                    "abstract": {"type": "text", "analyzer": "custom_text_analyzer"},
                     "keywords": {"type": "keyword"},
-                    "content": {"type": "text", "analyzer": "standard"},
+                    "content": {"type": "text", "analyzer": "custom_text_analyzer"},
                     "vector": {"type": "dense_vector", "dims": vector_dims}
                 }
             }
