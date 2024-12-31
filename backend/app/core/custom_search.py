@@ -4,6 +4,12 @@ import numpy as np
 import logging 
 from elasticsearch import Elasticsearch
 from typing import List, Dict, Any, Optional
+from transformers import AutoTokenizer, AutoModel
+import torch
+
+model_name = "sentence-transformers/all-MiniLM-L6-v2"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModel.from_pretrained(model_name)
 
 def fetch_custom_search_results(query: str, num_results: int = 10) -> list[dict]:
     """
@@ -33,24 +39,49 @@ def fetch_custom_search_results(query: str, num_results: int = 10) -> list[dict]
         return results
     else:
         raise Exception(f"Error al consultar la API: {response.status_code}, {response.text}")
+    
+def generate_embedding(text: str) -> list[float]:
+    """
+    Genera un embedding para un texto dado utilizando Hugging Face.
+
+    Args:
+        text: El texto a procesar.
+
+    Returns:
+        list[float]: Embedding del texto como una lista de floats.
+    """
+    # Tokenizar el texto
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+
+    # Generar las representaciones del modelo
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    # Extraer la representación del token [CLS]
+    # Generalmente el embedding del token [CLS] (posición 0) es representativo del texto completo
+    embedding = outputs.last_hidden_state[:, 0, :].squeeze().tolist()
+    return embedding
 
 def process_search_results(results: list[dict]) -> list[dict]:
     """
     Procesa los resultados de la API de Custom Search JSON y los prepara para Elasticsearch.
-    Genera vectores aleatorios de ejemplo para cada documento.
+    Genera embeddings usando Hugging Face.
 
     Args:
-        results: Lista de resultados crudos de la API
+        results: Lista de resultados crudos de la API.
 
     Returns:
-        list[dict]: Lista de documentos procesados
+        list[dict]: Lista de documentos procesados.
     """
     documents = []
     for item in results:
-        # Genera un vector aleatorio de 3 dimensiones como ejemplo
-        # En un caso real, aquí utilizaríamos un modelo para generar los embeddings
-        vector = np.random.rand(3).tolist()
-        
+        # Texto combinado del título y el snippet
+        text = f"{item.get('title', '')} {item.get('snippet', '')}".strip()
+
+        # Generar el embedding utilizando Hugging Face
+        vector = generate_embedding(text)
+
+        # Crear el documento procesado
         documents.append({
             "title": item.get("title", ""),
             "author": "Google Search",
@@ -58,7 +89,7 @@ def process_search_results(results: list[dict]) -> list[dict]:
             "abstract": item.get("snippet", ""),
             "keywords": [],
             "content": item.get("link", ""),
-            "vector": vector  # Vector de 3 dimensiones
+            "vector": vector  # Vector generado por el modelo
         })
     return documents
 
