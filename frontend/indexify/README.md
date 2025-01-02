@@ -17,6 +17,8 @@ Make sure you have the following installed:
 
 ```sh
 git clone https://github.com/yourusername/yourrepository.git
+```
+```sh
 cd yourrepository/frontend/indexify
 ```
 
