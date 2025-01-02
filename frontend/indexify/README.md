@@ -2,8 +2,6 @@
 
 This project aims to build an efficient search system. The frontend is built using Next.js and Tailwind CSS.
 
-## Project Structure
-
 ## Getting Started
 
 ### Prerequisites
@@ -22,7 +20,13 @@ git clone https://github.com/yourusername/yourrepository.git
 cd yourrepository/frontend/indexify
 ```
 
-2. Install the dependencies:
+2. Navigate to the Frontend directory:
+
+```sh
+cd frontend
+```
+
+3. Install the dependencies:
 
 ```sh
 npm install
@@ -30,7 +34,7 @@ npm install
 yarn install
 ```
 
-3. Running the Development Server
+4. Running the Development Server
    To start the development server, run:
 
 ```sh
@@ -39,8 +43,8 @@ npm run dev
 yarn dev
 ```
 
-Building for Production
-To build the project for production, run:
+5. Building for Production
+   To build the project for production, run:
 
 ```sh
 npm start
