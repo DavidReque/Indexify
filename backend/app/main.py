@@ -1,6 +1,6 @@
 from core.index import create_elasticsearch_index
 from core.client import get_client
-from core.documents import index_document
+from core.documents import index_document, fetch_and_index_new_documents
 from core.custom_search import fetch_custom_search_results, process_search_results
 from core.custom_search import vector_text_search, advanced_search, generate_embedding
 from fastapi import FastAPI, HTTPException
@@ -66,10 +66,35 @@ async def search(query: SearchQuery):
             size=query.size
         )
         
+         # Si no hay resultados, buscar e indexar nuevos documentos
+        if not results:
+            print(f"No se encontraron resultados para '{query.query}'. Buscando nuevos documentos...")
+            new_documents = await fetch_and_index_new_documents(client, index_name, query.query)
+            
+            if new_documents:
+                # Realizar nueva búsqueda con los documentos recién indexados
+                results = vector_text_search(
+                    client=client,
+                    index_name=index_name,
+                    query_text=query.query,
+                    query_vector=query_vector,
+                    size=query.size
+                )
+                return {
+                    "results": results,
+                    "new_documents_indexed": len(new_documents)
+                }
+            else:
+                return {
+                    "results": [],
+                    "new_documents_indexed": 0,
+                    "message": "No se encontraron nuevos documentos para indexar"
+                }
+        
         return {"results": results}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-    
+
 @app.post("/api/advanced-search")
 async def advanced_search_endpoint(query: AdvancedSearchQuery):
     try:
