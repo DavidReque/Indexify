@@ -24,7 +24,7 @@ git clone https://github.com/yourusername/yourrepository.git
 2. Navigate to the backend directory:
 
 ```sh
-cd yourrepository/frontend/indexify
+cd yourrepository/backend
 ```
 
 3. Install the dependencies:
