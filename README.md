@@ -1,3 +1,3 @@
-# Public News & Document Search
+# Search Engine
 
-This project aims to build an efficient search system for public news and academic articles.
+This project aims to build an efficient search system.

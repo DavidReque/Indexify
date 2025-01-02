@@ -1,4 +1,4 @@
-# Frontend - Public News & Document Search
+# Frontend - Search Engine
 
 This project aims to build an efficient search system. The frontend is built using Next.js and Tailwind CSS.
 
@@ -18,6 +18,7 @@ Make sure you have the following installed:
 ```sh
 git clone https://github.com/yourusername/yourrepository.git
 ```
+
 ```sh
 cd yourrepository/frontend/indexify
 ```
@@ -25,7 +26,7 @@ cd yourrepository/frontend/indexify
 2. Navigate to the Frontend directory:
 
 ```sh
-cd frontend
+cd yourrepository/frontend/indexify
 ```
 
 3. Install the dependencies:

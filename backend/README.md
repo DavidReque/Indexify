@@ -1,4 +1,4 @@
-# Frontend - Public News & Document Search
+# Backend - Search Engine
 
 This project aims to build an efficient search system. The backend is built using FastAPI.
 
@@ -19,13 +19,12 @@ Make sure you have the following installed:
 
 ```sh
 git clone https://github.com/yourusername/yourrepository.git
-cd yourrepository/frontend/indexify
 ```
 
 2. Navigate to the backend directory:
 
 ```sh
-cd backend
+cd yourrepository/frontend/indexify
 ```
 
 3. Install the dependencies:
