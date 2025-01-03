@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, KeyboardEvent, JSX } from "react";
-import { Search, X, AlertCircle } from "lucide-react";
+import React, { useState, KeyboardEvent, JSX, useEffect } from "react";
+import { Search, X, AlertCircle, TrendingUp } from "lucide-react";
 import Link from "next/link";
 
 interface SearchResult {
@@ -9,6 +9,12 @@ interface SearchResult {
   abstract: string;
   keywords?: string[];
   content: string;
+}
+
+interface Suggestion {
+  text: string;
+  count: number;
+  trending: boolean;
 }
 
 interface SearchError {
@@ -22,6 +28,46 @@ export default function Home(): JSX.Element {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<SearchError>({ message: "", show: false });
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+
+  useEffect(() => {
+    const fetchSuggestions = async () => {
+      if (searchQuery.length < 2) {
+        setSuggestions([]);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/api/suggestions?query=${searchQuery}`,
+          {
+            method: "GET",
+            headers: {
+              Accept: "application/json",
+            },
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) throw new Error("Error fetching suggestions");
+
+        const data = await response.json();
+        setSuggestions(data.suggestions);
+      } catch (error) {
+        console.error("Error fetching suggestions:", error);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchSuggestions, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery]);
+
+  const handleSuggestionClick = (suggestion: Suggestion): void => {
+    setSearchQuery(suggestion.text);
+    setShowSuggestions(false);
+    handleSearch();
+  };
 
   const handleSearch = async (): Promise<void> => {
     if (!searchQuery.trim()) return;
@@ -83,9 +129,14 @@ export default function Home(): JSX.Element {
     setError({ message: "", show: false });
   };
 
-  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>): void => {
+  const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
-      handleSearch();
+      if (showSuggestions && suggestions.length > 0) {
+        e.preventDefault();
+        handleSuggestionClick(suggestions[0]); // Seleccionar la primera sugerencia automáticamente
+      } else {
+        handleSearch();
+      }
     }
   };
 
@@ -113,8 +164,8 @@ export default function Home(): JSX.Element {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleKeyPress}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setTimeout(() => setIsFocused(false), 200)}
+              onFocus={() => setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               placeholder="¿Qué estás buscando?"
               className="w-full py-5 px-12 rounded-2xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent shadow-lg shadow-gray-100/50 text-lg placeholder:text-gray-400 transition-all hover:shadow-xl"
               disabled={isLoading}
@@ -129,6 +180,32 @@ export default function Home(): JSX.Element {
               </button>
             )}
           </div>
+
+          {showSuggestions && suggestions.length > 0 && (
+            <div className="absolute w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
+              {suggestions.map((suggestion, index) => (
+                <div
+                  key={index}
+                  className="px-4 py-3 hover:bg-gray-50 cursor-pointer flex items-center gap-3"
+                  onClick={() => handleSuggestionClick(suggestion)}
+                >
+                  <TrendingUp
+                    className={`w-4 h-4 ${
+                      suggestion.trending ? "text-red-500" : "text-gray-400"
+                    }`}
+                  />
+                  <div>
+                    <div className="font-medium">{suggestion.text}</div>
+                    {suggestion.count > 0 && (
+                      <div className="text-sm text-gray-500">
+                        {suggestion.count.toLocaleString()} búsquedas
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Error message */}
           {error.show && (

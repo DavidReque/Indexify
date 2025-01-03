@@ -2,6 +2,7 @@ from core.index import create_elasticsearch_index
 from core.client import get_client
 from core.documents import index_document, fetch_and_index_new_documents
 from core.custom_search import fetch_custom_search_results, process_search_results
+from core.suggestions import get_search_suggestions
 from core.custom_search import vector_text_search, advanced_search, generate_embedding
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -92,6 +93,24 @@ async def search(query: SearchQuery):
                 }
         
         return {"results": results}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+    
+@app.get("/api/suggestions")
+async def get_suggestions(query: str):
+    try:
+        client = get_client()
+        index_name = os.getenv("INDEX_NAME")
+        
+        suggestions = get_search_suggestions(
+            client=client,
+            index_name=index_name,
+            query=query
+        )
+        
+        return {
+            "suggestions": [suggestion.to_dict() for suggestion in suggestions]
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

@@ -34,7 +34,7 @@ async def fetch_and_index_new_documents(client, index_name: str, query: str) -> 
     """
     try:
         # Buscar nuevos documentos
-        raw_results = fetch_custom_search_results(query, num_results=5)
+        raw_results = fetch_custom_search_results(query, num_results=10)
         documents = process_search_results(raw_results)
         
         # Indexar los nuevos documentos

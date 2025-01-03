@@ -34,7 +34,20 @@ def create_elasticsearch_index(
             },
             "mappings": {
                 "properties": {
-                    "title": {"type": "text", "analyzer": "custom_text_analyzer"},
+                    "title": {
+                        "type": "text",
+                        "analyzer": "custom_text_analyzer",
+                        "fields": {
+                            "keyword": {
+                                "type": "keyword",
+                                "ignore_above": 256
+                            },
+                            "suggestion": {
+                                "type": "completion",
+                                "analyzer": "custom_text_analyzer"
+                            }
+                        }
+                    },
                     "author": {"type": "keyword"},
                     "publication_date": {"type": "date"},
                     "abstract": {"type": "text", "analyzer": "custom_text_analyzer"},
