@@ -72,7 +72,7 @@ def get_search_suggestions(
         if "aggregations" in response and "suggestions" in response["aggregations"]:
             for bucket in response["aggregations"]["suggestions"]["buckets"]:
                 doc_count = bucket["doc_count"]
-                is_trending = doc_count > 1  # Ajusta este valor según tus necesidades
+                is_trending = doc_count > 1
                 
                 suggestion = SearchSuggestion(
                     text=bucket["key"],
