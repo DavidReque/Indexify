@@ -2,7 +2,7 @@ from core.index import create_elasticsearch_index
 from core.client import get_client
 from core.documents import index_document, fetch_and_index_new_documents
 from core.custom_search import fetch_custom_search_results, process_search_results
-from core.suggestions import get_search_suggestions
+from core.suggestions import get_search_suggestions, update_search_stats
 from core.custom_search import vector_text_search, advanced_search, generate_embedding
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -55,6 +55,9 @@ async def search(query: SearchQuery):
         client = get_client()
         index_name = os.getenv("INDEX_NAME")
         
+        # Actualizar estadísticas de búsqueda
+        update_search_stats(client, index_name, query.query)
+        
         # Generar embedding para la consulta
         query_vector = generate_embedding(query.query)
         
@@ -67,13 +70,14 @@ async def search(query: SearchQuery):
             size=query.size
         )
         
-         # Si no hay resultados, buscar e indexar nuevos documentos
         if not results:
-            print(f"No se encontraron resultados para '{query.query}'. Buscando nuevos documentos...")
-            new_documents = await fetch_and_index_new_documents(client, index_name, query.query)
+            new_documents = await fetch_and_index_new_documents(
+                client, 
+                index_name, 
+                query.query
+            )
             
             if new_documents:
-                # Realizar nueva búsqueda con los documentos recién indexados
                 results = vector_text_search(
                     client=client,
                     index_name=index_name,
@@ -81,18 +85,9 @@ async def search(query: SearchQuery):
                     query_vector=query_vector,
                     size=query.size
                 )
-                return {
-                    "results": results,
-                    "new_documents_indexed": len(new_documents)
-                }
-            else:
-                return {
-                    "results": [],
-                    "new_documents_indexed": 0,
-                    "message": "No se encontraron nuevos documentos para indexar"
-                }
         
         return {"results": results}
+        
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
     
@@ -113,7 +108,7 @@ async def get_suggestions(query: str):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
+    
 @app.post("/api/advanced-search")
 async def advanced_search_endpoint(query: AdvancedSearchQuery):
     try:
@@ -140,74 +135,74 @@ async def advanced_search_endpoint(query: AdvancedSearchQuery):
 #     client = get_client()
 #     index_name = os.getenv("INDEX_NAME")
 
-#     Crear el índice
+#     #Crear el índice
 #     if create_elasticsearch_index(client, index_name, vector_dims=384):
 #         print(f"Índice '{index_name}' creado correctamente")
 
-#     Realizar la consulta
-#     query = "Quantum Computing"
+    # #Realizar la consulta
+    # query = "Quantum Computing"
 
-#     try:
-#         raw_results = fetch_custom_search_results(query, num_results=5)
-#         documents = process_search_results(raw_results)
+    # try:
+    #     raw_results = fetch_custom_search_results(query, num_results=5)
+    #     documents = process_search_results(raw_results)
 
-#         # Indexar cada documento en Elasticsearch
-#         for doc in documents:
-#             if index_document(client, index_name, doc):
-#                 print(f"Documento '{doc['title']}' indexado correctamente")
+    #     # Indexar cada documento en Elasticsearch
+    #     for doc in documents:
+    #         if index_document(client, index_name, doc):
+    #             print(f"Documento '{doc['title']}' indexado correctamente")
 
-#         print("\n=== Pruebas de Búsqueda ===")
+    #     print("\n=== Pruebas de Búsqueda ===")
         
-#         Búsqueda vectorial
-#         print("\nPrueba de búsqueda vectorial:")
-#         query_text = "cybersecurity attack prevention"
-#         query_vector = generate_embedding(query_text)
+    #     #Búsqueda vectorial
+    #     print("\nPrueba de búsqueda vectorial:")
+    #     query_text = "cybersecurity attack prevention"
+    #     query_vector = generate_embedding(query_text)
         
-#         results = vector_text_search(
-#             client=client,
-#             index_name=index_name,
-#             query_text=query_text,
-#             query_vector=query_vector,
-#             size=3
-#         )
+    #     results = vector_text_search(
+    #         client=client,
+    #         index_name=index_name,
+    #         query_text=query_text,
+    #         query_vector=query_vector,
+    #         size=3
+    #     )
         
-#         print(f"Resultados para '{query_text}':")
-#         for i, result in enumerate(results, 1):
-#             print(f"{i}. {result['title']} (Score: {result['score']:.2f})")
+    #     print(f"Resultados para '{query_text}':")
+    #     for i, result in enumerate(results, 1):
+    #         print(f"{i}. {result['title']} (Score: {result['score']:.2f})")
 
-#         print("\nPrueba de búsqueda avanzada:")
-#         advanced_results = advanced_search(
-#             client=client,
-#             index_name=index_name,
-#             content="Bitcoin",
-#             size=3
-#         )
+    #     print("\nPrueba de búsqueda avanzada:")
+    #     advanced_results = advanced_search(
+    #         client=client,
+    #         index_name=index_name,
+    #         content="Bitcoin",
+    #         size=3
+    #     )
         
-#         print("Resultados de búsqueda avanzada:")
-#         for i, result in enumerate(advanced_results, 1):
-#             print(f"{i}. {result['title']}")
+    #     print("Resultados de búsqueda avanzada:")
+    #     for i, result in enumerate(advanced_results, 1):
+    #         print(f"{i}. {result['title']}")
 
-#         Prueba de relevancia
-#         print("\nPrueba de relevancia temática:")
-#         topics = ["security", "bitcoin", "Quantum Computing"]
+    #     #Prueba de relevancia
+    #     print("\nPrueba de relevancia temática:")
+    #     topics = ["security", "bitcoin", "Quantum Computing"]
         
-#         for topic in topics:
-#             query_vector = generate_embedding(topic)
-#             results = vector_text_search(
-#                 client=client,
-#                 index_name=index_name,
-#                 query_text=topic,
-#                 query_vector=query_vector,
-#                 size=1
-#             )
+    #     for topic in topics:
+    #         query_vector = generate_embedding(topic)
+    #         results = vector_text_search(
+    #             client=client,
+    #             index_name=index_name,
+    #             query_text=topic,
+    #             query_vector=query_vector,
+    #             size=1
+    #         )
             
-#             if results:
-#                 print(f"\nMejor resultado para '{topic}':")
-#                 print(f"Título: {results[0]['title']}")
-#                 print(f"Score: {results[0]['score']:.2f}")
+    #         if results:
+    #             print(f"\nMejor resultado para '{topic}':")
+    #             print(f"Título: {results[0]['title']}")
+    #             print(f"Score: {results[0]['score']:.2f}")
 
-#     except Exception as e:
-#         print(f"Error: {e}")
+    # except Exception as e:
+    #     print(f"Error: {e}")
 
 # if __name__ == "__main__":
 #     main()

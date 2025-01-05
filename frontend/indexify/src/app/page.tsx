@@ -196,11 +196,6 @@ export default function Home(): JSX.Element {
                   />
                   <div>
                     <div className="font-medium">{suggestion.text}</div>
-                    {suggestion.count > 0 && (
-                      <div className="text-sm text-gray-500">
-                        {suggestion.count.toLocaleString()} búsquedas
-                      </div>
-                    )}
                   </div>
                 </div>
               ))}

@@ -1,33 +1,20 @@
 from elasticsearch import Elasticsearch
 import logging
+from typing import List
 
-def create_elasticsearch_index(
-    client: Elasticsearch,
-    index_name: str,
-    vector_dims: int = 3
-) -> bool:
+def create_elasticsearch_index(client: Elasticsearch, index_name: str, vector_dims: int = 384) -> bool:
     """
-    Crea un índice en Elasticsearch
-
-    Args:
-        client: Cliente de Elasticsearch
-        index_name: Nombre del índice a crear
-        vector_dims: Dimensión del vector denso (default: 3)
-
-    Returns:
-        bool: True si se creó el índice correctamente, False en caso contrario
+    Crea un índice en Elasticsearch con soporte para sugerencias y conteo de búsquedas
     """
     try:
-        if vector_dims <= 0:
-            raise ValueError("La dimensión del vector debe ser mayor a 0")
-
         index_mapping = {
             "settings": {
                 "analysis": {
                     "analyzer": {
                         "custom_text_analyzer": {
-                            "type": "standard",
-                            "stopwords": "_english_"
+                            "type": "custom",
+                            "tokenizer": "standard",
+                            "filter": ["lowercase", "stop", "snowball"]
                         }
                     }
                 }
@@ -38,11 +25,8 @@ def create_elasticsearch_index(
                         "type": "text",
                         "analyzer": "custom_text_analyzer",
                         "fields": {
-                            "keyword": {
-                                "type": "keyword",
-                                "ignore_above": 256
-                            },
-                            "suggestion": {
+                            "keyword": {"type": "keyword"},
+                            "completion": {
                                 "type": "completion",
                                 "analyzer": "custom_text_analyzer"
                             }
@@ -51,20 +35,40 @@ def create_elasticsearch_index(
                     "author": {"type": "keyword"},
                     "publication_date": {"type": "date"},
                     "abstract": {"type": "text", "analyzer": "custom_text_analyzer"},
-                    "keywords": {"type": "keyword"},
+                    "keywords": {
+                        "type": "keyword",
+                        "fields": {
+                            "text": {
+                                "type": "text",
+                                "analyzer": "custom_text_analyzer"
+                            }
+                        }
+                    },
                     "content": {"type": "text", "analyzer": "custom_text_analyzer"},
-                    "vector": {"type": "dense_vector", "dims": vector_dims}
+                    "vector": {"type": "dense_vector", "dims": vector_dims},
+                    "search_count": {"type": "long"}
                 }
             }
         }
 
-        if client.indices.exists(index=index_name):
-            logging.warning(f"El índice '{index_name}' ya existe")
-            return False
-
-        client.indices.create(index=index_name, body=index_mapping)
-        logging.info(f"Índice '{index_name}' creado exitosamente")
-        return True
+        if not client.indices.exists(index=index_name):
+            client.indices.create(index=index_name, body=index_mapping)
+            logging.info(f"Índice '{index_name}' creado exitosamente")
+            
+            # Crear índice para estadísticas de búsqueda
+            search_stats_mapping = {
+                "mappings": {
+                    "properties": {
+                        "query": {"type": "keyword"},
+                        "count": {"type": "long"},
+                        "last_searched": {"type": "date"},
+                        "is_trending": {"type": "boolean"}
+                    }
+                }
+            }
+            client.indices.create(index=f"{index_name}_stats", body=search_stats_mapping)
+            return True
+        return False
 
     except Exception as e:
         logging.error(f"Error al crear el índice: {str(e)}")
