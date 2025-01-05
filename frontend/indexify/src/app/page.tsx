@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, KeyboardEvent, JSX, useEffect } from "react";
-import { Search, X, AlertCircle, TrendingUp } from "lucide-react";
+import { Search, X, AlertCircle, TrendingUp, History } from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface SearchResult {
   title: string;
@@ -23,13 +24,39 @@ interface SearchError {
 }
 
 export default function Home(): JSX.Element {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [isFocused, setIsFocused] = useState<boolean>(false);
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<SearchError>({ message: "", show: false });
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+
+  // Cargar resultados previos del localStorage al iniciar
+  useEffect(() => {
+    const savedResults = localStorage.getItem("searchResults");
+    const savedQuery = localStorage.getItem("lastQuery");
+    const savedHistory = localStorage.getItem("searchHistory");
+
+    if (savedResults && savedQuery) {
+      setSearchResults(JSON.parse(savedResults));
+      setSearchQuery(savedQuery);
+    }
+
+    if (savedHistory) {
+      setSearchHistory(JSON.parse(savedHistory));
+    }
+
+    // Recuperar query de URL si existe
+    const queryParam = searchParams.get("q");
+    if (queryParam && queryParam !== savedQuery) {
+      setSearchQuery(queryParam);
+      handleSearch(queryParam);
+    }
+  }, []);
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -66,30 +93,31 @@ export default function Home(): JSX.Element {
   const handleSuggestionClick = (suggestion: Suggestion): void => {
     setSearchQuery(suggestion.text);
     setShowSuggestions(false);
-    handleSearch();
+    handleSearch(suggestion.text);
   };
 
-  const handleSearch = async (): Promise<void> => {
-    if (!searchQuery.trim()) return;
+  const handleSearch = async (query: string = searchQuery): Promise<void> => {
+    if (!query.trim()) return;
 
     setIsLoading(true);
     setError({ message: "", show: false });
-    setSearchResults([]);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/search", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        mode: "cors", // Especificar explícitamente el modo CORS
-        credentials: "include", // Incluir credenciales si es necesario
-        body: JSON.stringify({
-          query: searchQuery,
-          size: 10,
-        }),
-      });
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/search`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            query: query,
+            size: 10,
+          }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -103,6 +131,21 @@ export default function Home(): JSX.Element {
       }
 
       setSearchResults(data.results);
+
+      // Guardar resultados en localStorage
+      localStorage.setItem("searchResults", JSON.stringify(data.results));
+      localStorage.setItem("lastQuery", query);
+
+      // Actualizar historial de búsqueda
+      const updatedHistory = [
+        query,
+        ...searchHistory.filter((q) => q !== query),
+      ].slice(0, 5);
+      setSearchHistory(updatedHistory);
+      localStorage.setItem("searchHistory", JSON.stringify(updatedHistory));
+
+      // Actualizar URL
+      router.push(`?q=${encodeURIComponent(query)}`);
 
       if (data.results.length === 0) {
         setError({
@@ -125,15 +168,15 @@ export default function Home(): JSX.Element {
 
   const handleClear = (): void => {
     setSearchQuery("");
-    //setSearchResults([]);
     setError({ message: "", show: false });
+    // No limpiamos los resultados para mantener el contexto
   };
 
   const handleKeyPress = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       if (showSuggestions && suggestions.length > 0) {
         e.preventDefault();
-        handleSuggestionClick(suggestions[0]); // Seleccionar la primera sugerencia automáticamente
+        handleSuggestionClick(suggestions[0]);
       } else {
         handleSearch();
       }
@@ -143,7 +186,6 @@ export default function Home(): JSX.Element {
   return (
     <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen bg-gradient-to-br from-white to-gray-50 p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-8 row-start-2 items-center w-full max-w-3xl">
-        {/* Header section remains the same */}
         <div className="flex flex-col items-center gap-4 mb-8">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
             Búsqueda
@@ -154,7 +196,6 @@ export default function Home(): JSX.Element {
         </div>
 
         <div className="relative w-full">
-          {/* Search input section */}
           <div className="relative flex items-center w-full group">
             <div className="absolute left-4 w-5 h-5 text-gray-400 transition-transform duration-200 group-focus-within:text-blue-500">
               <Search className="w-full h-full" />
@@ -181,6 +222,29 @@ export default function Home(): JSX.Element {
             )}
           </div>
 
+          {/* Historial de búsqueda */}
+          {searchHistory.length > 0 && !showSuggestions && !searchQuery && (
+            <div className="absolute w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
+              <div className="p-2 text-sm text-gray-500 border-b flex items-center gap-2">
+                <History className="w-4 h-4" />
+                Búsquedas recientes
+              </div>
+              {searchHistory.map((query, index) => (
+                <div
+                  key={index}
+                  className="px-4 py-2 hover:bg-gray-50 cursor-pointer text-gray-700"
+                  onClick={() => {
+                    setSearchQuery(query);
+                    handleSearch(query);
+                  }}
+                >
+                  {query}
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Sugerencias */}
           {showSuggestions && suggestions.length > 0 && (
             <div className="absolute w-full mt-2 bg-white rounded-lg shadow-lg border border-gray-100 z-50">
               {suggestions.map((suggestion, index) => (
@@ -202,7 +266,6 @@ export default function Home(): JSX.Element {
             </div>
           )}
 
-          {/* Error message */}
           {error.show && (
             <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-700">
               <AlertCircle className="w-5 h-5" />
@@ -210,7 +273,6 @@ export default function Home(): JSX.Element {
             </div>
           )}
 
-          {/* Search Results */}
           {searchResults.length > 0 && (
             <div className="mt-8">
               <h2 className="text-xl font-semibold mb-4">Resultados</h2>
@@ -220,8 +282,8 @@ export default function Home(): JSX.Element {
                     key={index}
                     className="p-4 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
                   >
-                    <Link content="" href={`${result.content}`}>
-                      <h3 className="text-lg font-medium text-blue-600">
+                    <Link href={`${result.content}`}>
+                      <h3 className="text-lg font-medium text-blue-600 hover:underline">
                         {result.title}
                       </h3>
                     </Link>
@@ -244,7 +306,6 @@ export default function Home(): JSX.Element {
             </div>
           )}
 
-          {/* Loading State */}
           {isLoading && (
             <div className="flex justify-center mt-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
