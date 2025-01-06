@@ -50,7 +50,7 @@ export default function Home(): JSX.Element {
 
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL_SUGGESTIONS}?query=${searchQuery}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/suggestions?query=${searchQuery}`,
           {
             method: "GET",
             headers: {
