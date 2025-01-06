@@ -4,24 +4,7 @@ import React, { useState, KeyboardEvent, JSX, useEffect } from "react";
 import { Search, X, AlertCircle, TrendingUp, History } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-
-interface SearchResult {
-  title: string;
-  abstract: string;
-  keywords?: string[];
-  content: string;
-}
-
-interface Suggestion {
-  text: string;
-  count: number;
-  trending: boolean;
-}
-
-interface SearchError {
-  message: string;
-  show: boolean;
-}
+import { SearchError, SearchResult, Suggestion } from "@/types";
 
 export default function Home(): JSX.Element {
   const router = useRouter();
@@ -67,7 +50,7 @@ export default function Home(): JSX.Element {
 
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/api/suggestions?query=${searchQuery}`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL_SUGGESTIONS}?query=${searchQuery}`,
           {
             method: "GET",
             headers: {
