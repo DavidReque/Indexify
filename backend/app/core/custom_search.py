@@ -1,6 +1,5 @@
 import requests
 import os
-import numpy as np
 import logging 
 from elasticsearch import Elasticsearch
 from typing import List, Dict, Any, Optional

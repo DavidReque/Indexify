@@ -1,6 +1,5 @@
 from elasticsearch import Elasticsearch
 import logging
-from typing import List
 
 def create_elasticsearch_index(client: Elasticsearch, index_name: str, vector_dims: int = 384) -> bool:
     """

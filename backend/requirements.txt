@@ -7,4 +7,3 @@ python-dotenv
 transformers
 torch
 requests
-numpy
