@@ -34,11 +34,8 @@ export default function Home() {
         {/* Header */}
         <div className="flex flex-col items-center gap-4 mb-8">
           <h1 className="text-5xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 bg-clip-text text-transparent">
-            Búsqueda
+            Search
           </h1>
-          <p className="text-gray-500 text-lg">
-            Encuentra lo que necesitas en segundos
-          </p>
         </div>
 
         <div className="relative w-full">
@@ -106,7 +103,7 @@ export default function Home() {
           {/* Search Results */}
           {searchResults.length > 0 && (
             <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4">Resultados</h2>
+              <h2 className="text-xl font-semibold mb-4">Results</h2>
               <div className="space-y-4">
                 {searchResults.map((result, index) => (
                   <div
