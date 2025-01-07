@@ -13,7 +13,7 @@ origins = [
     os.getenv("FRONTEND_URL_LOCAL"),
 ]
 
-# Configurar CORS
+# set up CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -23,9 +23,9 @@ app.add_middleware(
     expose_headers=["*"]
 )
 
-# Rutas
+# Routes
 @app.get("/")
 async def root():
     return {"message": "API running"}
 
-app.include_router(router)  # Use router instead of routes
+app.include_router(router) 

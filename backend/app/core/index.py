@@ -3,7 +3,7 @@ import logging
 
 def create_elasticsearch_index(client: Elasticsearch, index_name: str, vector_dims: int = 384) -> bool:
     """
-    Crea un índice en Elasticsearch con soporte para sugerencias y conteo de búsquedas
+    Create an index in Elasticsearch with support for suggestions and search counting
     """
     try:
         index_mapping = {
@@ -52,9 +52,9 @@ def create_elasticsearch_index(client: Elasticsearch, index_name: str, vector_di
 
         if not client.indices.exists(index=index_name):
             client.indices.create(index=index_name, body=index_mapping)
-            logging.info(f"Índice '{index_name}' creado exitosamente")
+            logging.info(f"Índice '{index_name}' successfully created")
             
-            # Crear índice para estadísticas de búsqueda
+            # Create index for statistics
             search_stats_mapping = {
                 "mappings": {
                     "properties": {
@@ -70,5 +70,5 @@ def create_elasticsearch_index(client: Elasticsearch, index_name: str, vector_di
         return False
 
     except Exception as e:
-        logging.error(f"Error al crear el índice: {str(e)}")
+        logging.error(f"Error creating index: {str(e)}")
         return False

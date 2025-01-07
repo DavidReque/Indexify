@@ -6,30 +6,30 @@ from .utils import extract_keywords
 
 def index_document(client: Elasticsearch, index_name: str, document: dict) -> bool:
     """
-    Indexa un documento con procesamiento de keywords
+    Indexes a document with keyword processing
     """
     try:
-        # Extraer keywords del título y contenido si no se proporcionan
+        # Extract keywords from title and content if not provided
         if not document.get('keywords'):
             text = f"{document.get('title', '')} {document.get('abstract', '')}"
             document['keywords'] = extract_keywords(text)
         
-        # Agregar campo de completion suggestion
+        # Add completion suggestion field
         document['title_completion'] = {
             "input": [document['title']] + document['keywords'],
             "weight": 1
         }
         
         response = client.index(index=index_name, document=document)
-        logging.info(f"Documento indexado: {response['_id']}")
+        logging.info(f"Document indexed: {response['_id']}")
         return True
     except Exception as e:
-        logging.error(f"Error al indexar documento: {str(e)}")
+        logging.error(f"Error indexing document: {str(e)}")
         return False
 
 async def fetch_and_index_new_documents(client: Elasticsearch, index_name: str, query: str) -> List[dict]:
     """
-    Busca y indexa nuevos documentos cuando no se encuentran resultados.
+    Fetches and indexes new documents when no results are found.
     """
     try:
         raw_results = fetch_custom_search_results(query, num_results=10)
@@ -39,9 +39,9 @@ async def fetch_and_index_new_documents(client: Elasticsearch, index_name: str, 
         for doc in documents:
             if index_document(client, index_name, doc):
                 indexed_documents.append(doc)
-                logging.info(f"Documento '{doc['title']}' indexado correctamente")
+                logging.info(f"Document '{doc['title']}' indexed successfully")
         
         return indexed_documents
     except Exception as e:
-        logging.error(f"Error al indexar nuevos documentos: {e}")
+        logging.error(f"Error indexing new documents: {e}")
         return []

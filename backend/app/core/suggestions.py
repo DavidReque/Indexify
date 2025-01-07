@@ -19,7 +19,7 @@ class SearchSuggestion:
 
 def update_search_stats(client: Elasticsearch, index_name: str, query: str):
     """
-    Actualiza las estadísticas de búsqueda
+    Updates search statistics
     """
     try:
         stats_index = f"{index_name}_stats"
@@ -57,7 +57,7 @@ def update_search_stats(client: Elasticsearch, index_name: str, query: str):
                 }
             )
     except Exception as e:
-        logging.error(f"Error al actualizar estadísticas: {str(e)}")
+        logging.error(f"Error updating search statistics: {str(e)}")
 
 def get_search_suggestions(
     client: Elasticsearch,
@@ -66,10 +66,10 @@ def get_search_suggestions(
     size: int = 5
 ) -> List[SearchSuggestion]:
     """
-    Obtiene sugerencias basadas en título, keywords y estadísticas de búsqueda
+    Retrieves suggestions based on title, keywords, and search statistics
     """
     try:
-        # Buscar en estadísticas de búsqueda
+        # Search in search statistics
         stats_response = client.search(
             index=f"{index_name}_stats",
             body={
@@ -84,7 +84,7 @@ def get_search_suggestions(
         suggestions = []
         seen_texts = set()
 
-        # Agregar sugerencias de estadísticas
+        # Add suggestions from statistics
         for hit in stats_response['hits']['hits']:
             source = hit['_source']
             if source['query'] not in seen_texts:
@@ -95,7 +95,7 @@ def get_search_suggestions(
                 ))
                 seen_texts.add(source['query'])
 
-        # Completar con sugerencias de títulos y keywords
+        # Fill with suggestions from titles and keywords
         if len(suggestions) < size:
             completion_response = client.search(
                 index=index_name,
@@ -124,5 +124,5 @@ def get_search_suggestions(
         return suggestions
 
     except Exception as e:
-        logging.error(f"Error al obtener sugerencias: {str(e)}")
+        logging.error(f"Error retrieving suggestions: {str(e)}")
         return []
