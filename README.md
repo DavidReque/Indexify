@@ -2,7 +2,7 @@
 
 A powerful semantic search engine that combines traditional text search with vector similarity using Elasticsearch and machine learning embeddings.
 
-![Indexify](/frontend/indexify/public/video1.mp4)
+![Indexify Demo](https://github.com/DavidReque/Indexify/blob/main/frontend/indexify/public/video1.mp4?raw=true)
 
 ## Overview
 
@@ -54,14 +54,34 @@ backend/
 
 ```sh
 frontend/indexify/
-├── src/app/
+├── .next/
+├── node_modules/
+├── public/
+├── src/
+│   └── app/
+│       ├── globals.css
+│       ├── layout.tsx
+│       └── page.tsx
 ├── components/
-├── types/
+├── └── SearchBar.tsx
 ├── config/
+│   └── constants.ts
 ├── hooks/
+│   ├── useSearch.ts
+│   └── useSuggestions.ts
+├── types/
+│   └── index.ts
 ├── .env
-├── config.ts
-└── README.md
+├── .gitignore
+├── eslint.config.mjs
+├── next-env.d.ts
+├── next.config.ts
+├── package-lock.json
+├── package.json
+├── postcss.config.mjs
+├── README.md
+├── tailwind.config.ts
+└── tsconfig.json
 ```
 
 ## Technical Details
