@@ -26,7 +26,9 @@ Indexify is a comprehensive search solution that leverages Google Custom Search 
 - [Google Custom Search](https://developers.google.com/custom-search?hl=es-419)
 - [FastAPI](https://fastapi.tiangolo.com/)
 
-## Architecture
+## 🏗️ Architecture
+
+![arch](https://github.com/user-attachments/assets/861ad70a-3d34-4fad-a81e-6616537a017e)
 
 ### Backend Structure
 
