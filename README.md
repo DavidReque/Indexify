@@ -163,10 +163,13 @@ Indexify uses the sentence-transformers/all-MiniLM-L6-v2 model to generate text 
 
 ## API Routes
 
-The FastAPI application provides the following endpoints:
+Core Endpoints
 
-`GET` `/`: Health check endpoint
-Additional routes defined in `api/routes/routes.py`
+```sh
+POST /api/search
+POST /api/advanced-search
+GET /api/suggestions
+```
 
 ## Interested in Contributing?
 
