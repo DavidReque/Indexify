@@ -2,7 +2,7 @@
 
 A powerful semantic search engine that combines traditional text search with vector similarity using Elasticsearch and machine learning embeddings.
 
-![Indexify Demo](https://github.com/DavidReque/Indexify/blob/main/frontend/indexify/public/video1.mp4?raw=true)
+[Indexify Video](https://github.com/DavidReque/Indexify/blob/main/frontend/indexify/public/video1.mp4)
 
 ## Overview
 
