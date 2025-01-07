@@ -33,7 +33,13 @@ npm install
 yarn install
 ```
 
-4. Running the Development Server
+4. The frontend requires specific environment variables to be configured. Create a .env.local file in the frontend/indexify directory and add the following:
+
+```sh
+NEXT_PUBLIC_BACKEND_URL=your_backend_url_here
+```
+
+5. Running the Development Server
    To start the development server, run:
 
 ```sh
@@ -42,7 +48,7 @@ npm run dev
 yarn dev
 ```
 
-5. Building for Production
+6. Building for Production
    To build the project for production, run:
 
 ```sh
