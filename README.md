@@ -28,7 +28,55 @@ Indexify is a comprehensive search solution that leverages Google Custom Search 
 
 ## 🏗️ Architecture
 
-![arch](https://github.com/user-attachments/assets/861ad70a-3d34-4fad-a81e-6616537a017e)
+```mermaid
+graph TD
+    subgraph Frontend
+        UI[User Interface]
+        SearchBar[Search Bar]
+        Results[Results Display]
+        Suggestions[Search Suggestions]
+    end
+
+    subgraph Backend API
+        API[FastAPI Backend]
+        SearchHandler[Search Handler]
+        SuggestionEngine[Suggestion Engine]
+        IndexManager[Index Manager]
+    end
+
+    subgraph External Services
+        Google[Google Custom Search API]
+        Transform[Sentence Transformer]
+    end
+
+    subgraph Elasticsearch
+        ESIndex[Search Index]
+        Stats[Search Statistics]
+        Vectors[Vector Storage]
+    end
+
+    UI --> |Search Query| SearchBar
+    SearchBar --> |API Request| API
+    SearchBar --> |Get Suggestions| SuggestionEngine
+
+    API --> |Process Query| SearchHandler
+    SearchHandler --> |Vector Search| ESIndex
+    SearchHandler --> |Update Stats| Stats
+
+    API --> |New Content Request| Google
+    Google --> |Raw Results| IndexManager
+    IndexManager --> |Generate Embeddings| Transform
+    Transform --> |Store Vectors| Vectors
+
+    SuggestionEngine --> |Fetch Trends| Stats
+    ESIndex --> |Return Results| Results
+    Stats --> |Popular Searches| Suggestions
+
+    style UI fill:#f9f,stroke:#333
+    style ESIndex fill:#69b,stroke:#333
+    style Transform fill:#9cf,stroke:#333
+    style Google fill:#4a8,stroke:#333
+```
 
 ### Backend Structure
 
