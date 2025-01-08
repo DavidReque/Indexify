@@ -72,10 +72,10 @@ graph TD
     ESIndex --> |Return Results| Results
     Stats --> |Popular Searches| Suggestions
 
-    style UI fill:#f9f,stroke:#333
-    style ESIndex fill:#69b,stroke:#333
-    style Transform fill:#9cf,stroke:#333
-    style Google fill:#4a8,stroke:#333
+    style UI fill:#f9f,stroke:#333,color:#000
+    style ESIndex fill:#69b,stroke:#333,color:#000
+    style Transform fill:#9cf,stroke:#333,color:#000
+    style Google fill:#4a8,stroke:#333,color:#000
 ```
 
 ### Backend Structure
