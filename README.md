@@ -24,7 +24,6 @@ Indexify is a comprehensive search solution that leverages Google Custom Search 
 - [Elastic Search](https://www.elastic.co/)
 - [FastAPI](https://fastapi.tiangolo.com/)
 - [Google Custom Search](https://developers.google.com/custom-search?hl=es-419)
-- [FastAPI](https://fastapi.tiangolo.com/)
 
 ## 🏗️ Architecture
 
@@ -184,12 +183,105 @@ The system uses a sophisticated index mapping with the following fields:
 
 ## Embedding Process
 
-Indexify uses the sentence-transformers/all-MiniLM-L6-v2 model to generate text embeddings that capture semantic meaning. The process involves:
+Indexify uses the `sentence-transformers/all-MiniLM-L6-v2` model to generate semantic text embeddings that capture the meaning of content. Here's how the process works:
 
-1. Text preprocessing and tokenization
-2. Vector generation using the transformer model
-3. Storage in Elasticsearch's dense vector field
-4. Similarity calculation during search using cosine similarity
+### 1. Model Initialization
+
+```python
+model_name = "sentence-transformers/all-MiniLM-L6-v2"
+tokenizer = AutoTokenizer.from_pretrained(model_name)
+model = AutoModel.from_pretrained(model_name)
+```
+
+### 2. Content Processing Flow
+
+```mermaid
+graph TD
+    A[Input Text] -->|Tokenization| B[Tokens]
+    B -->|Model Processing| C[Raw Embeddings]
+    C -->|Extract CLS Token| D[Final Vector]
+    D -->|Store| E[Elasticsearch]
+```
+
+### 3. Technical Implementation
+
+#### Text Preprocessing & Embedding Generation
+
+```python
+def generate_embedding(text: str) -> list[float]:
+    # Tokenize with truncation for long texts
+    inputs = tokenizer(
+        text,
+        return_tensors="pt",
+        truncation=True,
+        max_length=512
+    )
+
+    # Generate embeddings without gradient computation
+    with torch.no_grad():
+        outputs = model(**inputs)
+
+    # Extract CLS token embedding
+    embedding = outputs.last_hidden_state[:, 0, :].squeeze().tolist()
+    return embedding
+```
+
+#### Search Process with Embeddings
+
+```python
+def vector_text_search(client, index_name, query_text, query_vector):
+    query = {
+        "query": {
+            "script_score": {
+                "query": {
+                    "multi_match": {
+                        "query": query_text,
+                        "fields": ["title^3", "abstract^2", "content"]
+                    }
+                },
+                "script": {
+                    "source": "cosineSimilarity(params.query_vector, 'vector') + 1.0",
+                    "params": {"query_vector": query_vector}
+                }
+            }
+        }
+    }
+```
+
+### 4. Processing Pipeline
+
+1. **Input Processing**:
+
+   - Combines title and snippet for search results
+   - Truncates to 512 tokens maximum
+   - Handles special tokens automatically
+
+2. **Vector Generation**:
+
+   - Converts tokens to model inputs
+   - Processes through transformer model
+   - Extracts CLS token representation
+   - Converts to float list format
+
+3. **Search Integration**:
+
+   - Stores vectors in Elasticsearch
+   - Uses cosine similarity for matching
+   - Combines with text-based relevance
+   - Boosts results based on field importance
+
+4. **Result Scoring**:
+   - Base text similarity score
+   - Vector similarity contribution
+   - Optional keyword presence boost
+   - Field-specific weight multipliers
+
+The embedding system enhances search accuracy by:
+
+- Capturing semantic relationships
+- Understanding context beyond keywords
+- Enabling similarity-based matching
+- Supporting hybrid ranking strategies
 
 ## Search Features
 
