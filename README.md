@@ -140,36 +140,38 @@ frontend/indexify/
 The system uses a sophisticated index mapping with the following fields:
 
 ```sh
-"mappings": {
-                "properties": {
-                    "title": {
-                        "type": "text",
-                        "analyzer": "custom_text_analyzer",
-                        "fields": {
-                            "keyword": {"type": "keyword"},
-                            "completion": {
-                                "type": "completion",
-                                "analyzer": "custom_text_analyzer"
-                            }
-                        }
-                    },
-                    "author": {"type": "keyword"},
-                    "publication_date": {"type": "date"},
-                    "abstract": {"type": "text", "analyzer": "custom_text_analyzer"},
-                    "keywords": {
-                        "type": "keyword",
-                        "fields": {
-                            "text": {
-                                "type": "text",
-                                "analyzer": "custom_text_analyzer"
-                            }
-                        }
-                    },
-                    "content": {"type": "text", "analyzer": "custom_text_analyzer"},
-                    "vector": {"type": "dense_vector", "dims": vector_dims},
-                    "search_count": {"type": "long"}
+{
+    "mappings": {
+        "properties": {
+            "title": {
+                "type": "text",
+                "analyzer": "custom_text_analyzer",
+                "fields": {
+                    "keyword": {"type": "keyword"},
+                    "completion": {
+                        "type": "completion",
+                        "analyzer": "custom_text_analyzer"
+                    }
                 }
-            }
+            },
+            "author": {"type": "keyword"},
+            "publication_date": {"type": "date"},
+            "abstract": {"type": "text", "analyzer": "custom_text_analyzer"},
+            "keywords": {
+                "type": "keyword",
+                "fields": {
+                    "text": {
+                        "type": "text",
+                        "analyzer": "custom_text_analyzer"
+                    }
+                }
+            },
+            "content": {"type": "text", "analyzer": "custom_text_analyzer"},
+            "vector": {"type": "dense_vector", "dims": vector_dims},
+            "search_count": {"type": "long"}
+        }
+    }
+}
 ```
 
 - `title`: Text field with keyword and completion sub-fields
